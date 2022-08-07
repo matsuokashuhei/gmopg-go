@@ -2,20 +2,17 @@ package gmopg
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/url"
 	"regexp"
 	"strconv"
 )
 
-type Parser[C any] interface {
-	Parse(body []byte) error
-}
-
 type Member struct {
-	Id         string `json:"MemberID"`
-	Name       string `json:"MemberName"`
-	DeleteFlag int    `json:"DeleteFlag"`
+	Id         string
+	Name       string
+	DeleteFlag int
 }
 
 func NewMember(id string, name string) *Member {
@@ -24,10 +21,11 @@ func NewMember(id string, name string) *Member {
 
 func (m *Member) Parse(body []byte) error {
 	s := string(body)
-	re, _ := regexp.Compile(`MemberID=(?P<MemberID>\w+)&MemberName=(?P<MemberName>.*)&DeleteFlag=(?P<DeleteFlag>[01]{1})`)
+	expr := `MemberID=(?P<MemberID>.+)&MemberName=(?P<MemberName>.*)&DeleteFlag=(?P<DeleteFlag>[01]{1})`
+	re, _ := regexp.Compile(expr)
 	matches := re.FindStringSubmatch(s)
 	if matches == nil {
-		return nil
+		return fmt.Errorf(`"%s" does not match "%s"`, s, expr)
 	}
 	result := make(map[string]string)
 	for i, name := range re.SubexpNames() {
