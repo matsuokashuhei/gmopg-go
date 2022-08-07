@@ -16,7 +16,7 @@ func NewMember(id string, name string) *Member {
 	return &Member{Id: id, Name: name}
 }
 
-func (m *Member) Parse(body map[string]string) error {
+func (m *Member) parse(body map[string]string) error {
 	m.Id = body["MemberID"]
 	m.Name = body["MemberName"]
 	var err error
@@ -34,7 +34,7 @@ func Find(ctx context.Context, id string) (*Member, error) {
 		return nil, err
 	}
 	m := &Member{}
-	m.Parse(res)
+	m.parse(res)
 	return m, nil
 }
 
@@ -43,6 +43,27 @@ func (m *Member) Save(ctx context.Context) error {
 	values.Set("MemberID", m.Id)
 	values.Set("MemberName", m.Name)
 	_, err := SaveMember.Call(&values)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Member) Update(ctx context.Context) error {
+	values := url.Values{}
+	values.Set("MemberID", m.Id)
+	values.Set("MemberName", m.Name)
+	_, err := UpdateMember.Call(&values)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Member) Delete(ctx context.Context) error {
+	values := url.Values{}
+	values.Set("MemberID", m.Id)
+	_, err := DeleteMember.Call(&values)
 	if err != nil {
 		return err
 	}

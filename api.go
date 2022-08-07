@@ -15,14 +15,14 @@ type API string
 const (
 	SaveMember   API = "/payment/SaveMember.idPass"
 	SearchMember API = "/payment/SearchMember.idPass"
+	UpdateMember API = "/payment/UpdateMember.idPass"
+	DeleteMember API = "/payment/DeleteMember.idPass"
 )
 
 func (p API) url() *url.URL {
 	url := url.URL{Scheme: "https", Path: string(p)}
 	switch p {
-	case SaveMember:
-		url.Host = os.Getenv("SITE_DOMAIN")
-	case SearchMember:
+	case SaveMember, SearchMember, UpdateMember, DeleteMember:
 		url.Host = os.Getenv("SITE_DOMAIN")
 	}
 	return &url
