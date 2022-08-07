@@ -17,6 +17,7 @@ const (
 	SearchMember API = "/payment/SearchMember.idPass"
 	UpdateMember API = "/payment/UpdateMember.idPass"
 	DeleteMember API = "/payment/DeleteMember.idPass"
+	SaveCard     API = "/payment/SaveCard.idPass"
 )
 
 func (p API) url() *url.URL {

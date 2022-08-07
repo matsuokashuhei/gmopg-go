@@ -16,16 +16,6 @@ func NewMember(id string, name string) *Member {
 	return &Member{Id: id, Name: name}
 }
 
-func (m *Member) parse(body map[string]string) error {
-	m.Id = body["MemberID"]
-	m.Name = body["MemberName"]
-	var err error
-	if m.DeleteFlag, err = strconv.Atoi(body["DeleteFlag"]); err != nil {
-		return err
-	}
-	return nil
-}
-
 func Find(ctx context.Context, id string) (*Member, error) {
 	values := url.Values{}
 	values.Set("MemberID", id)
@@ -65,6 +55,29 @@ func (m *Member) Delete(ctx context.Context) error {
 	values.Set("MemberID", m.Id)
 	_, err := DeleteMember.Call(&values)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Member) RegisterCard(ctx context.Context, token string) (*Card, error) {
+	values := url.Values{}
+	values.Set("MemberID", m.Id)
+	values.Set("Token", token)
+	result, err := SaveCard.Call(&values)
+	if err != nil {
+		return nil, err
+	}
+	card := &Card{}
+	card.Parse(result)
+	return card, nil
+}
+
+func (m *Member) parse(body map[string]string) error {
+	m.Id = body["MemberID"]
+	m.Name = body["MemberName"]
+	var err error
+	if m.DeleteFlag, err = strconv.Atoi(body["DeleteFlag"]); err != nil {
 		return err
 	}
 	return nil
