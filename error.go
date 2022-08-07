@@ -1,20 +1,12 @@
 package gmopg
 
-import (
-	"errors"
-	"regexp"
-	"strings"
-)
+import "errors"
 
-func IsError(body []byte) bool {
-	s := string(body)
-	m, _ := regexp.MatchString(`^ErrCode=(E[0-9]{2}|E[0-9]{2}\|)+&ErrInfo=(E[0-9]{8}|E[0-9]{8}\|)+$`, s)
-	return m
+func IsError(body map[string]string) bool {
+	_, exist := body["ErrCode"]
+	return exist
 }
 
-func NewError(body []byte) error {
-	s := string(body)
-	params := strings.Split(s, "&")
-	info := strings.Split(params[len(params)-1], "=")
-	return errors.New(info[len(info)-1])
+func NewError(body map[string]string) error {
+	return errors.New(body["ErrInfo"])
 }

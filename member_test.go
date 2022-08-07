@@ -30,7 +30,7 @@ func TestSave(t *testing.T) {
 	member := NewMember(id, name)
 	ctx := context.Background()
 	if err = member.Save(ctx); err != nil {
-		panic(err)
+		t.Errorf("Save returns error, %v", err)
 	}
 }
 
@@ -44,7 +44,7 @@ func TestFind(t *testing.T) {
 	member := NewMember(id, name)
 	ctx := context.Background()
 	if err = member.Save(ctx); err != nil {
-		panic(err)
+		t.Fatalf("Save returns error, %v", err)
 	}
 	ctx = context.Background()
 	member, err = Find(ctx, id)
