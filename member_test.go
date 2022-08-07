@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/lucsky/cuid"
 )
 
 func TestNewMember(t *testing.T) {
@@ -21,33 +21,25 @@ func TestNewMember(t *testing.T) {
 }
 
 func TestSave(t *testing.T) {
-	uuid, err := uuid.NewRandom()
-	if err != nil {
-		panic(err)
-	}
-	id := uuid.String()
+	id := cuid.New()
 	name := fmt.Sprintf("Test %s", id)
 	member := NewMember(id, name)
 	ctx := context.Background()
-	if err = member.Save(ctx); err != nil {
+	if err := member.Save(ctx); err != nil {
 		t.Errorf("Save returns error, %v", err)
 	}
 }
 
 func TestFind(t *testing.T) {
-	uuid, err := uuid.NewRandom()
-	if err != nil {
-		panic(err)
-	}
-	id := uuid.String()
+	id := cuid.New()
 	name := fmt.Sprintf("Test %s", id)
 	member := NewMember(id, name)
 	ctx := context.Background()
-	if err = member.Save(ctx); err != nil {
+	if err := member.Save(ctx); err != nil {
 		t.Fatalf("Save returns error, %v", err)
 	}
 	ctx = context.Background()
-	member, err = Find(ctx, id)
+	member, err := Find(ctx, id)
 	if err != nil {
 		t.Errorf("Find returns error, %v", err)
 	}
