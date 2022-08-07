@@ -1,0 +1,13 @@
+{
+    "name": "gmopg-go",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "runArgs": [
+        "--env-file",
+        ".env"
+    ],
+    "extensions": [
+        "golang.go"
+    ]
+}
