@@ -4,16 +4,14 @@ import (
 	"context"
 	"net/url"
 	"strconv"
+
+	"github.com/lucsky/cuid"
 )
 
 type Member struct {
 	Id         string
 	Name       string
 	DeleteFlag int
-}
-
-func NewMember(id string, name string) *Member {
-	return &Member{Id: id, Name: name}
 }
 
 func Find(ctx context.Context, id string) (*Member, error) {
@@ -24,12 +22,15 @@ func Find(ctx context.Context, id string) (*Member, error) {
 		return nil, err
 	}
 	m := &Member{}
-	m.parse(res)
+	m.Parse(res)
 	return m, nil
 }
 
-func (m *Member) Save(ctx context.Context) error {
+func (m *Member) Create(ctx context.Context) error {
 	values := url.Values{}
+	if len(m.Id) == 0 {
+		m.Id = cuid.New()
+	}
 	values.Set("MemberID", m.Id)
 	values.Set("MemberName", m.Name)
 	_, err := SaveMember.Call(&values)
@@ -73,7 +74,7 @@ func (m *Member) RegisterCard(ctx context.Context, token string) (*Card, error) 
 	return card, nil
 }
 
-func (m *Member) parse(body map[string]string) error {
+func (m *Member) Parse(body map[string]string) error {
 	m.Id = body["MemberID"]
 	m.Name = body["MemberName"]
 	var err error

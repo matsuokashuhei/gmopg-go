@@ -1,6 +1,11 @@
 package gmopg
 
-import "errors"
+import (
+	"errors"
+	"strings"
+
+	"github.com/hashicorp/go-multierror"
+)
 
 func IsError(body map[string]string) bool {
 	_, exist := body["ErrCode"]
@@ -8,5 +13,9 @@ func IsError(body map[string]string) bool {
 }
 
 func NewError(body map[string]string) error {
-	return errors.New(body["ErrInfo"])
+	var result error
+	for _, info := range strings.Split(body["ErrInfo"], "|") {
+		result = multierror.Append(result, errors.New(info))
+	}
+	return result
 }

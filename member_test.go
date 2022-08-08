@@ -5,37 +5,37 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/lucsky/cuid"
 )
 
-func TestNewMember(t *testing.T) {
-	id := "test-1"
-	name := "Test 1"
-	member := NewMember(id, name)
-	if id != member.Id {
-		t.Errorf("got %s, wanted %s", member.Id, id)
-	}
-	if name != member.Name {
-		t.Errorf("got %s, wanted %s", member.Name, name)
+func TestCreate1(t *testing.T) {
+	id := cuid.New()
+	name := fmt.Sprintf("Test %s", id)
+	member := &Member{Id: id, Name: name}
+	ctx := context.Background()
+	if err := member.Create(ctx); err != nil {
+		t.Errorf("Save returns error, %v", err)
 	}
 }
 
-func TestSave(t *testing.T) {
-	id := cuid.New()
-	name := fmt.Sprintf("Test %s", id)
-	member := NewMember(id, name)
+func TestCreate2(t *testing.T) {
+	member := &Member{}
 	ctx := context.Background()
-	if err := member.Save(ctx); err != nil {
+	if err := member.Create(ctx); err != nil {
 		t.Errorf("Save returns error, %v", err)
+	}
+	if len(member.Id) == 0 {
+		t.Errorf("got %s, wanted %s", member.Id, "some cuid")
 	}
 }
 
 func TestFind(t *testing.T) {
 	id := cuid.New()
 	name := fmt.Sprintf("Test %s", id)
-	member := NewMember(id, name)
+	member := &Member{Id: id, Name: name}
 	ctx := context.Background()
-	if err := member.Save(ctx); err != nil {
+	if err := member.Create(ctx); err != nil {
 		t.Fatalf("Save returns error, %v", err)
 	}
 	ctx = context.Background()
@@ -57,9 +57,9 @@ func TestFind(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	id := cuid.New()
 	name := fmt.Sprintf("Test %s", id)
-	member := NewMember(id, name)
+	member := &Member{Id: id, Name: name}
 	ctx := context.Background()
-	if err := member.Save(ctx); err != nil {
+	if err := member.Create(ctx); err != nil {
 		t.Fatalf("Save returns error, %v", err)
 	}
 	ctx = context.Background()
@@ -76,9 +76,9 @@ func TestUpdate(t *testing.T) {
 func TestDelete(t *testing.T) {
 	id := cuid.New()
 	name := fmt.Sprintf("Test %s", id)
-	member := NewMember(id, name)
+	member := &Member{Id: id, Name: name}
 	ctx := context.Background()
-	if err := member.Save(ctx); err != nil {
+	if err := member.Create(ctx); err != nil {
 		t.Fatalf("Save returns error, %v", err)
 	}
 	ctx = context.Background()
@@ -89,7 +89,15 @@ func TestDelete(t *testing.T) {
 	if err == nil {
 		t.Errorf("Find does not return error")
 	}
-	if err.Error() != "E01390002" {
-		t.Errorf("got %s, wanted %s", err.Error(), "E01390002")
+	merrs, ok := err.(*multierror.Error)
+	if ok == false {
+		t.Errorf("Find does not return multierror.Error")
+	}
+	if len(merrs.Errors) != 1 {
+		t.Errorf("got %d, wanted %d", len(merrs.Errors), 1)
+	}
+	merr := merrs.Errors[0]
+	if merr.Error() != "E01390002" {
+		t.Errorf("got %s, wanted %s", merr.Error(), "E01390002")
 	}
 }
