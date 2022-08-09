@@ -14,7 +14,7 @@ type Member struct {
 	DeleteFlag int
 }
 
-func Find(ctx context.Context, id string) (*Member, error) {
+func FindMember(ctx context.Context, id string) (*Member, error) {
 	values := url.Values{}
 	values.Set("MemberID", id)
 	res, err := SearchMember.Call(&values)
@@ -24,6 +24,15 @@ func Find(ctx context.Context, id string) (*Member, error) {
 	m := &Member{}
 	m.Parse(res)
 	return m, nil
+}
+
+func CreateMember(ctx context.Context, id string, name string) (*Member, error) {
+	member := &Member{Id: id, Name: name}
+	err := member.Create(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return member, nil
 }
 
 func (m *Member) Create(ctx context.Context) error {
@@ -61,10 +70,10 @@ func (m *Member) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (m *Member) RegisterCard(ctx context.Context, token string) (*Card, error) {
+func (m *Member) RegisterCard(ctx context.Context, token *string) (*Card, error) {
 	values := url.Values{}
 	values.Set("MemberID", m.Id)
-	values.Set("Token", token)
+	values.Set("Token", *token)
 	result, err := SaveCard.Call(&values)
 	if err != nil {
 		return nil, err

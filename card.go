@@ -52,10 +52,8 @@ func GenerateToken(cardNo string, expire string, securityCode string, holder str
 	log.Println(rpub.Size())
 	encrypted, err := rsa.EncryptPKCS1v15(rand.Reader, rpub, j)
 	if err != nil {
-
 		log.Fatalf("rsa.EncryptPKCS1v15 returns error: %v", err)
 	}
-
 	encoded := base64.StdEncoding.EncodeToString(encrypted)
 	log.Println(encoded)
 	return encoded, nil

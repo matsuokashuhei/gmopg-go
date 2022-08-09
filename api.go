@@ -22,10 +22,11 @@ const (
 
 func (p API) url() *url.URL {
 	url := url.URL{Scheme: "https", Path: string(p)}
-	switch p {
-	case SaveMember, SearchMember, UpdateMember, DeleteMember:
-		url.Host = os.Getenv("SITE_DOMAIN")
-	}
+	// switch p {
+	// case SaveMember, SearchMember, UpdateMember, DeleteMember:
+	// 	url.Host = os.Getenv("SITE_DOMAIN")
+	// }
+	url.Host = os.Getenv("SITE_DOMAIN")
 	return &url
 }
 
