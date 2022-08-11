@@ -71,8 +71,8 @@ func (m *Member) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (m *Member) RegisterCard(ctx context.Context, cardInput CardInput) (*Card, error) {
-	card, err := CreateCard(ctx, m.Id, &cardInput)
+func (m *Member) RegisterCard(ctx context.Context, cardInput *CardInput) (*Card, error) {
+	card, err := CreateCard(ctx, m.Id, cardInput)
 	if err != nil {
 		return nil, err
 	}
