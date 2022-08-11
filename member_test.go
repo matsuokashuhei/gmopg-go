@@ -115,7 +115,7 @@ func TestRegisterCard(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GenerateToken returns error, %v", err)
 	}
-	card, err := member.RegisterCard(ctx, &token)
+	card, err := member.RegisterCard(ctx, token)
 	if err != nil {
 		t.Fatalf("RegisterCard returns error, %v", err)
 	}
