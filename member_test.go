@@ -3,7 +3,6 @@ package gmopg
 import (
 	"context"
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/hashicorp/go-multierror"
@@ -103,24 +102,24 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestRegisterCard(t *testing.T) {
-	id := cuid.New()
-	name := fmt.Sprintf("Test %s", id)
-	member := &Member{Id: id, Name: name}
-	ctx := context.Background()
-	if err := member.Create(ctx); err != nil {
-		t.Fatalf("Save returns error, %v", err)
-	}
-	token, err := GenerateToken("4111111111111111", "202212", "1234", member.Name)
-	if err != nil {
-		t.Fatalf("GenerateToken returns error, %v", err)
-	}
-	card, err := member.RegisterCard(ctx, token)
-	if err != nil {
-		t.Fatalf("RegisterCard returns error, %v", err)
-	}
-	if card == nil {
-		t.Fatalf("RegisterCard returns nil as card")
-	}
-	log.Printf("card: %v", card)
-}
+// func TestRegisterCard(t *testing.T) {
+// 	id := cuid.New()
+// 	name := fmt.Sprintf("Test %s", id)
+// 	member := &Member{Id: id, Name: name}
+// 	ctx := context.Background()
+// 	if err := member.Create(ctx); err != nil {
+// 		t.Fatalf("Save returns error, %v", err)
+// 	}
+// 	token, err := GenerateToken("4111111111111111", "202212", "1234", member.Name)
+// 	if err != nil {
+// 		t.Fatalf("GenerateToken returns error, %v", err)
+// 	}
+// 	card, err := member.RegisterCard(ctx, token)
+// 	if err != nil {
+// 		t.Fatalf("RegisterCard returns error, %v", err)
+// 	}
+// 	if card == nil {
+// 		t.Fatalf("RegisterCard returns nil as card")
+// 	}
+// 	log.Printf("card: %v", card)
+// }

@@ -1,6 +1,7 @@
 package gmopg
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -19,18 +20,39 @@ import (
 	"strings"
 )
 
+type CardInput struct {
+	No           string
+	Expire       string
+	SecurityCode string
+	Holder       string
+}
+
 type Card struct {
 	Seq     int
 	No      string
 	Forward string
 }
 
-func NewCard(seq int, no, string, forward string) *Card {
-	return &Card{Seq: seq, No: no, Forward: forward}
+func CreateCard(ctx context.Context, memberId string, cardInput *CardInput) (*Card, error) {
+	token, err := generateToken(cardInput)
+	if err != nil {
+		return nil, err
+	}
+	values := url.Values{
+		"MemberID": {memberId},
+		"Token":    {*token},
+	}
+	result, err := SaveCard.Call(&values)
+	if err != nil {
+		return nil, err
+	}
+	card := &Card{}
+	card.parse(result)
+	return card, nil
 }
 
-func GenerateToken(cardNo string, expire string, securityCode string, holder string) (*string, error) {
-	encrypted, err := encrypt(&CardInput{No: cardNo, Expire: expire, SecurityCode: securityCode, Holder: holder})
+func generateToken(cardInput *CardInput) (*string, error) {
+	encrypted, err := encrypt(cardInput)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +63,7 @@ func GenerateToken(cardNo string, expire string, securityCode string, holder str
 	return token, nil
 }
 
-func (c *Card) Parse(body map[string]string) error {
+func (c *Card) parse(body map[string]string) error {
 	var err error
 	if c.Seq, err = strconv.Atoi(body["CardSeq"]); err != nil {
 		return err
@@ -51,14 +73,6 @@ func (c *Card) Parse(body map[string]string) error {
 	return nil
 }
 
-type CardInput struct {
-	No           string
-	Expire       string
-	SecurityCode string
-	Holder       string
-}
-
-// func encrypt(cardNo string, expire string, securityCode string, holder string) (string, error) {
 func encrypt(input *CardInput) (string, error) {
 	block, _ := pem.Decode([]byte(strings.Replace(os.Getenv("SITE_PUBLIC_KEY"), `\n`, "\n", -1)))
 	if block == nil {
@@ -90,11 +104,11 @@ func encrypt(input *CardInput) (string, error) {
 	return base64.StdEncoding.EncodeToString(encrypted), nil
 }
 
-func getToken(card string) (*string, error) {
+func getToken(encrypted string) (*string, error) {
 	endpoint := fmt.Sprintf("https://%s/ext/api/credit/getToken", os.Getenv("SITE_DOMAIN"))
 	log.Printf("endpoint: %s", endpoint)
 	values := url.Values{
-		"Encrypted": {card},
+		"Encrypted": {encrypted},
 		"ShopID":    {os.Getenv("SHOP_ID")},
 		"KeyHash":   {os.Getenv("SITE_PUBLIC_KEY_HASH")},
 	}

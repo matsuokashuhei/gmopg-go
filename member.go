@@ -22,7 +22,7 @@ func FindMember(ctx context.Context, id string) (*Member, error) {
 		return nil, err
 	}
 	m := &Member{}
-	m.Parse(res)
+	m.parse(res)
 	return m, nil
 }
 
@@ -36,12 +36,13 @@ func CreateMember(ctx context.Context, id string, name string) (*Member, error) 
 }
 
 func (m *Member) Create(ctx context.Context) error {
-	values := url.Values{}
 	if len(m.Id) == 0 {
 		m.Id = cuid.New()
 	}
-	values.Set("MemberID", m.Id)
-	values.Set("MemberName", m.Name)
+	values := url.Values{
+		"MemberID":   {m.Id},
+		"MemberName": {m.Name},
+	}
 	_, err := SaveMember.Call(&values)
 	if err != nil {
 		return err
@@ -50,9 +51,10 @@ func (m *Member) Create(ctx context.Context) error {
 }
 
 func (m *Member) Update(ctx context.Context) error {
-	values := url.Values{}
-	values.Set("MemberID", m.Id)
-	values.Set("MemberName", m.Name)
+	values := url.Values{
+		"MemberID":   {m.Id},
+		"MemberName": {m.Name},
+	}
 	_, err := UpdateMember.Call(&values)
 	if err != nil {
 		return err
@@ -61,8 +63,7 @@ func (m *Member) Update(ctx context.Context) error {
 }
 
 func (m *Member) Delete(ctx context.Context) error {
-	values := url.Values{}
-	values.Set("MemberID", m.Id)
+	values := url.Values{"MemberID": {m.Id}}
 	_, err := DeleteMember.Call(&values)
 	if err != nil {
 		return err
@@ -70,20 +71,15 @@ func (m *Member) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (m *Member) RegisterCard(ctx context.Context, token *string) (*Card, error) {
-	values := url.Values{}
-	values.Set("MemberID", m.Id)
-	values.Set("Token", *token)
-	result, err := SaveCard.Call(&values)
+func (m *Member) RegisterCard(ctx context.Context, cardInput CardInput) (*Card, error) {
+	card, err := CreateCard(ctx, m.Id, &cardInput)
 	if err != nil {
 		return nil, err
 	}
-	card := &Card{}
-	card.Parse(result)
 	return card, nil
 }
 
-func (m *Member) Parse(body map[string]string) error {
+func (m *Member) parse(body map[string]string) error {
 	m.Id = body["MemberID"]
 	m.Name = body["MemberName"]
 	var err error
