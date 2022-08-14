@@ -2,20 +2,19 @@ package gmopg
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/hashicorp/go-multierror"
 )
 
-func IsError(body map[string]string) bool {
-	_, exist := body["ErrCode"]
+func IsError(result []map[string]*string) bool {
+	_, exist := result[0]["ErrCode"]
 	return exist
 }
 
-func NewError(body map[string]string) error {
-	var result error
-	for _, info := range strings.Split(body["ErrInfo"], "|") {
-		result = multierror.Append(result, errors.New(info))
+func NewError(result []map[string]*string) error {
+	var err error
+	for _, row := range result {
+		err = multierror.Append(err, errors.New(*row["ErrInfo"]))
 	}
-	return result
+	return err
 }

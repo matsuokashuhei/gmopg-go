@@ -1,7 +1,6 @@
 package gmopg
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -18,19 +17,16 @@ const (
 	UpdateMember API = "/payment/UpdateMember.idPass"
 	DeleteMember API = "/payment/DeleteMember.idPass"
 	SaveCard     API = "/payment/SaveCard.idPass"
+	SearchCard   API = "/payment/SearchCard.idPass"
 )
 
 func (p API) url() *url.URL {
 	url := url.URL{Scheme: "https", Path: string(p)}
-	// switch p {
-	// case SaveMember, SearchMember, UpdateMember, DeleteMember:
-	// 	url.Host = os.Getenv("SITE_DOMAIN")
-	// }
 	url.Host = os.Getenv("SITE_DOMAIN")
 	return &url
 }
 
-func (p API) Call(values *url.Values) (map[string]string, error) {
+func (p API) Call(values *url.Values) ([]map[string]*string, error) {
 	values.Set("SiteID", os.Getenv("SITE_ID"))
 	values.Set("SitePass", os.Getenv("SITE_PASS"))
 	url := p.url()
@@ -39,7 +35,7 @@ func (p API) Call(values *url.Values) (map[string]string, error) {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=windows-31j")
-	log.Printf("url: %s", url.String())
+	log.Printf("url: %s, body: %s", url.String(), values.Encode())
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
@@ -58,13 +54,28 @@ func (p API) Call(values *url.Values) (map[string]string, error) {
 	return result, nil
 }
 
-func parse(body *[]byte) map[string]string {
+func parse(body *[]byte) []map[string]*string {
 	params := strings.Split(string(*body), "&")
-	fmt.Println(params)
-	result := make(map[string]string)
-	for _, param := range params {
-		kv := strings.Split(param, "=")
-		result[kv[0]] = kv[1]
+	if len(params) == 0 {
+		return nil
+	}
+	c := countRow(params[0])
+	result := make([]map[string]*string, c)
+	for i := 0; i < c; i++ {
+		row := make(map[string]*string)
+		for _, param := range params {
+			kv := strings.Split(param, "=")
+			key := kv[0]
+			values := kv[1]
+			value := strings.Split(values, "|")[i]
+			// log.Printf("i: %d, key: %s, values: %v, value: %s", i, key, values, value)
+			row[key] = &value
+		}
+		result[i] = row
 	}
 	return result
+}
+
+func countRow(param string) int {
+	return len(strings.Split(strings.Split(param, "=")[1], "|"))
 }

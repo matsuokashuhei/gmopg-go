@@ -20,21 +20,23 @@ import (
 	"strings"
 )
 
-type CardInput struct {
-	No           string
-	Expire       string
-	SecurityCode string
-	Holder       string
-}
-
 type Card struct {
-	Seq     int
-	No      string
-	Forward string
+	Seq         int
+	Name        string
+	No          string
+	HolderName  string
+	Expire      string
+	DefaultFlag int
+	DeleteFlag  int
 }
 
-func CreateCard(ctx context.Context, memberId string, cardInput *CardInput) (*Card, error) {
-	token, err := generateToken(cardInput)
+const (
+	Default   int = 1
+	Undecided int = 0
+)
+
+func CreateCard(ctx context.Context, memberId string, holderName string, number string, expiryDate string, securityCode string) (*Card, error) {
+	token, err := generateToken(&holderName, &number, &expiryDate, &securityCode)
 	if err != nil {
 		return nil, err
 	}
@@ -46,13 +48,54 @@ func CreateCard(ctx context.Context, memberId string, cardInput *CardInput) (*Ca
 	if err != nil {
 		return nil, err
 	}
+	values = url.Values{
+		"MemberID": {memberId},
+		"CardSeq":  {*result[0]["CardSeq"]},
+	}
+	result, err = SearchCard.Call(&values)
+	if err != nil {
+		return nil, err
+	}
 	card := &Card{}
-	card.parse(result)
+	card.parse(result[0])
 	return card, nil
 }
 
-func generateToken(cardInput *CardInput) (*string, error) {
-	encrypted, err := encrypt(cardInput)
+func FindCard(ctx context.Context, memberId string, seq int) (*Card, error) {
+	values := url.Values{
+		"MemberID": {memberId},
+		"CardSeq":  {strconv.Itoa(seq)},
+	}
+	result, err := SearchCard.Call(&values)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("res: %v", result)
+	card := &Card{}
+	card.parse(result[0])
+	return card, nil
+}
+
+func FindCards(ctx context.Context, memberId string) ([]*Card, error) {
+	values := url.Values{
+		"MemberID": {memberId},
+	}
+	result, err := SearchCard.Call(&values)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("res: %v", result)
+	cards := make([]*Card, len(result))
+	for i, row := range result {
+		card := &Card{}
+		card.parse(row)
+		cards[i] = card
+	}
+	return cards, nil
+}
+
+func generateToken(holderName *string, number *string, expiryDate *string, securityCode *string) (*string, error) {
+	encrypted, err := encrypt(holderName, number, expiryDate, securityCode)
 	if err != nil {
 		return nil, err
 	}
@@ -63,17 +106,45 @@ func generateToken(cardInput *CardInput) (*string, error) {
 	return token, nil
 }
 
-func (c *Card) parse(body map[string]string) error {
-	var err error
-	if c.Seq, err = strconv.Atoi(body["CardSeq"]); err != nil {
+func (c *Card) parse(body map[string]*string) error {
+	seq, err := strconv.Atoi(*body["CardSeq"])
+	if err != nil {
 		return err
 	}
-	c.No = body["CardNo"]
-	c.Forward = body["Forward"]
+	c.Seq = seq
+	c.No = *body["CardNo"]
+	v, exist := body["CardName"]
+	if exist {
+		c.Name = *v
+	}
+	v, exist = body["DefaultFlg"]
+	if exist {
+		defaultFlag, err := strconv.Atoi(*v)
+		if err != nil {
+			return err
+		}
+		c.DefaultFlag = defaultFlag
+	}
+	v, exist = body["Expire"]
+	if exist {
+		c.Expire = *v
+	}
+	v, exist = body["HolderName"]
+	if exist {
+		c.HolderName = *v
+	}
+	v, exist = body["DeleteFlag"]
+	if exist {
+		deleteFlag, err := strconv.Atoi(*v)
+		if err != nil {
+			return err
+		}
+		c.DeleteFlag = deleteFlag
+	}
 	return nil
 }
 
-func encrypt(input *CardInput) (string, error) {
+func encrypt(holder *string, number *string, expiryDate *string, securityCode *string) (*string, error) {
 	block, _ := pem.Decode([]byte(strings.Replace(os.Getenv("SITE_PUBLIC_KEY"), `\n`, "\n", -1)))
 	if block == nil {
 		log.Fatalln("block is nil")
@@ -87,11 +158,11 @@ func encrypt(input *CardInput) (string, error) {
 	if !ok {
 		log.Fatalf("key is not rsa.PublicKey type")
 	}
-	card := map[string]string{
-		"cardNo":       input.No,
-		"expire":       input.Expire,
-		"securityCode": input.SecurityCode,
-		"holderName":   input.Holder,
+	card := map[string]*string{
+		"holderName":   holder,
+		"cardNo":       number,
+		"expire":       expiryDate,
+		"securityCode": securityCode,
 	}
 	j, err := json.Marshal(card)
 	if err != nil {
@@ -101,14 +172,15 @@ func encrypt(input *CardInput) (string, error) {
 	if err != nil {
 		log.Fatalf("rsa.EncryptPKCS1v15 returns error: %v", err)
 	}
-	return base64.StdEncoding.EncodeToString(encrypted), nil
+	encoded := base64.StdEncoding.EncodeToString(encrypted)
+	return &encoded, nil
 }
 
-func getToken(encrypted string) (*string, error) {
+func getToken(encrypted *string) (*string, error) {
 	endpoint := fmt.Sprintf("https://%s/ext/api/credit/getToken", os.Getenv("SITE_DOMAIN"))
 	log.Printf("endpoint: %s", endpoint)
 	values := url.Values{
-		"Encrypted": {encrypted},
+		"Encrypted": {*encrypted},
 		"ShopID":    {os.Getenv("SHOP_ID")},
 		"KeyHash":   {os.Getenv("SITE_PUBLIC_KEY_HASH")},
 	}

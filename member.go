@@ -17,12 +17,12 @@ type Member struct {
 func FindMember(ctx context.Context, id string) (*Member, error) {
 	values := url.Values{}
 	values.Set("MemberID", id)
-	res, err := SearchMember.Call(&values)
+	result, err := SearchMember.Call(&values)
 	if err != nil {
 		return nil, err
 	}
 	m := &Member{}
-	m.parse(res)
+	m.parse(result[0])
 	return m, nil
 }
 
@@ -71,20 +71,30 @@ func (m *Member) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (m *Member) RegisterCard(ctx context.Context, cardInput *CardInput) (*Card, error) {
-	card, err := CreateCard(ctx, m.Id, cardInput)
-	if err != nil {
-		return nil, err
-	}
-	return card, nil
+func (m *Member) CreateCard(ctx context.Context, number string, expiryDate string, securityCode string) (*Card, error) {
+	// card, err := CreateCard(ctx, m, number, expiryDate, securityCode)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// FindCard(ctx, m.Id, card.Seq)
+	return CreateCard(ctx, m.Id, m.Name, number, expiryDate, securityCode)
 }
 
-func (m *Member) parse(body map[string]string) error {
-	m.Id = body["MemberID"]
-	m.Name = body["MemberName"]
-	var err error
-	if m.DeleteFlag, err = strconv.Atoi(body["DeleteFlag"]); err != nil {
+// func (m *Member) RegisterCard(ctx context.Context, cardInput *CardInput) (*Card, error) {
+// 	card, err := CreateCard(ctx, m.Id, cardInput)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return card, nil
+// }
+
+func (m *Member) parse(body map[string]*string) error {
+	m.Id = *body["MemberID"]
+	m.Name = *body["MemberName"]
+	deleteFlag, err := strconv.Atoi(*body["DeleteFlag"])
+	if err != nil {
 		return err
 	}
+	m.DeleteFlag = deleteFlag
 	return nil
 }
