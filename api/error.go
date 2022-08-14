@@ -1,4 +1,4 @@
-package gmopg
+package api
 
 import (
 	"errors"

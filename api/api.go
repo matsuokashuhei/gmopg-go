@@ -1,4 +1,4 @@
-package gmopg
+package api
 
 import (
 	"io"
@@ -18,6 +18,7 @@ const (
 	DeleteMember API = "/payment/DeleteMember.idPass"
 	SaveCard     API = "/payment/SaveCard.idPass"
 	SearchCard   API = "/payment/SearchCard.idPass"
+	DeleteCard   API = "/payment/DeleteCard.idPass"
 )
 
 func (p API) url() *url.URL {
@@ -68,7 +69,6 @@ func parse(body *[]byte) []map[string]*string {
 			key := kv[0]
 			values := kv[1]
 			value := strings.Split(values, "|")[i]
-			// log.Printf("i: %d, key: %s, values: %v, value: %s", i, key, values, value)
 			row[key] = &value
 		}
 		result[i] = row

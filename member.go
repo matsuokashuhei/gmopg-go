@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strconv"
 
+	"matsuokashuhei/gmopg-go/api"
+
 	"github.com/lucsky/cuid"
 )
 
@@ -17,7 +19,7 @@ type Member struct {
 func FindMember(ctx context.Context, id string) (*Member, error) {
 	values := url.Values{}
 	values.Set("MemberID", id)
-	result, err := SearchMember.Call(&values)
+	result, err := api.SearchMember.Call(&values)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +45,7 @@ func (m *Member) Create(ctx context.Context) error {
 		"MemberID":   {m.Id},
 		"MemberName": {m.Name},
 	}
-	_, err := SaveMember.Call(&values)
+	_, err := api.SaveMember.Call(&values)
 	if err != nil {
 		return err
 	}
@@ -55,7 +57,7 @@ func (m *Member) Update(ctx context.Context) error {
 		"MemberID":   {m.Id},
 		"MemberName": {m.Name},
 	}
-	_, err := UpdateMember.Call(&values)
+	_, err := api.UpdateMember.Call(&values)
 	if err != nil {
 		return err
 	}
@@ -64,7 +66,7 @@ func (m *Member) Update(ctx context.Context) error {
 
 func (m *Member) Delete(ctx context.Context) error {
 	values := url.Values{"MemberID": {m.Id}}
-	_, err := DeleteMember.Call(&values)
+	_, err := api.DeleteMember.Call(&values)
 	if err != nil {
 		return err
 	}

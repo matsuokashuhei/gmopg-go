@@ -12,10 +12,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"matsuokashuhei/gmopg-go/api"
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 )
@@ -44,7 +44,7 @@ func CreateCard(ctx context.Context, memberId string, holderName string, number 
 		"MemberID": {memberId},
 		"Token":    {*token},
 	}
-	result, err := SaveCard.Call(&values)
+	result, err := api.SaveCard.Call(&values)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func CreateCard(ctx context.Context, memberId string, holderName string, number 
 		"MemberID": {memberId},
 		"CardSeq":  {*result[0]["CardSeq"]},
 	}
-	result, err = SearchCard.Call(&values)
+	result, err = api.SearchCard.Call(&values)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func FindCard(ctx context.Context, memberId string, seq int) (*Card, error) {
 		"MemberID": {memberId},
 		"CardSeq":  {strconv.Itoa(seq)},
 	}
-	result, err := SearchCard.Call(&values)
+	result, err := api.SearchCard.Call(&values)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func FindCards(ctx context.Context, memberId string) ([]*Card, error) {
 	values := url.Values{
 		"MemberID": {memberId},
 	}
-	result, err := SearchCard.Call(&values)
+	result, err := api.SearchCard.Call(&values)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +92,17 @@ func FindCards(ctx context.Context, memberId string) ([]*Card, error) {
 		cards[i] = card
 	}
 	return cards, nil
+}
+
+func DeleteCard(ctx context.Context, memberId string, seq int) error {
+	values := url.Values{
+		"MemberID": {memberId},
+		"CardSeq":  {strconv.Itoa(seq)},
+	}
+	if _, err := api.DeleteCard.Call(&values); err != nil {
+		return err
+	}
+	return nil
 }
 
 func generateToken(holderName *string, number *string, expiryDate *string, securityCode *string) (*string, error) {
@@ -153,7 +164,6 @@ func encrypt(holder *string, number *string, expiryDate *string, securityCode *s
 	if err != nil {
 		log.Fatalf("x509.ParsePKIXPublicKey returns error: %v", err)
 	}
-	log.Println(reflect.TypeOf(pub))
 	rpub, ok := pub.(*rsa.PublicKey)
 	if !ok {
 		log.Fatalf("key is not rsa.PublicKey type")
