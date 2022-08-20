@@ -16,9 +16,15 @@ const (
 	SearchMember API = "/payment/SearchMember.idPass"
 	UpdateMember API = "/payment/UpdateMember.idPass"
 	DeleteMember API = "/payment/DeleteMember.idPass"
-	SaveCard     API = "/payment/SaveCard.idPass"
-	SearchCard   API = "/payment/SearchCard.idPass"
-	DeleteCard   API = "/payment/DeleteCard.idPass"
+)
+const (
+	SaveCard   API = "/payment/SaveCard.idPass"
+	SearchCard API = "/payment/SearchCard.idPass"
+	DeleteCard API = "/payment/DeleteCard.idPass"
+)
+const (
+	EntryTran API = "/payment/EntryTran.idPass"
+	ExecTran  API = "/payment/ExecTran.idPass"
 )
 
 func (p API) url() *url.URL {
@@ -27,9 +33,18 @@ func (p API) url() *url.URL {
 	return &url
 }
 
-func (p API) Call(values *url.Values) ([]map[string]*string, error) {
+func (p API) setParameters(values *url.Values) {
 	values.Set("SiteID", os.Getenv("SITE_ID"))
 	values.Set("SitePass", os.Getenv("SITE_PASS"))
+	switch p {
+	case EntryTran, ExecTran:
+		values.Set("ShopID", os.Getenv("SHOP_ID"))
+		values.Set("ShopPass", os.Getenv("SHOP_PASS"))
+	}
+}
+
+func (p API) Call(values *url.Values) ([]map[string]*string, error) {
+	p.setParameters(values)
 	url := p.url()
 	req, err := http.NewRequest(http.MethodPost, url.String(), strings.NewReader(values.Encode()))
 	if err != nil {
