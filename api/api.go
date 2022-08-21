@@ -23,8 +23,9 @@ const (
 	DeleteCard API = "/payment/DeleteCard.idPass"
 )
 const (
-	EntryTran API = "/payment/EntryTran.idPass"
-	ExecTran  API = "/payment/ExecTran.idPass"
+	EntryTran   API = "/payment/EntryTran.idPass"
+	ExecTran    API = "/payment/ExecTran.idPass"
+	SearchTrade API = "/payment/SearchTrade.idPass"
 )
 
 func (p API) url() *url.URL {
@@ -37,7 +38,7 @@ func (p API) setParameters(values *url.Values) {
 	values.Set("SiteID", os.Getenv("SITE_ID"))
 	values.Set("SitePass", os.Getenv("SITE_PASS"))
 	switch p {
-	case EntryTran, ExecTran:
+	case EntryTran, ExecTran, SearchTrade:
 		values.Set("ShopID", os.Getenv("SHOP_ID"))
 		values.Set("ShopPass", os.Getenv("SHOP_PASS"))
 	}
