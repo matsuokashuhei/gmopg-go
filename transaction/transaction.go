@@ -15,6 +15,7 @@ const (
 	SAUTH   Job = "SAUTH"
 	CANCEL  Job = "CANCEL"
 	SALES   Job = "SALES"
+	VOID    Job = "VOID"
 )
 
 func ConvertToJob(jobCd string) (Job, error) {
@@ -31,6 +32,8 @@ func ConvertToJob(jobCd string) (Job, error) {
 		return CANCEL, nil
 	case "SALES":
 		return SALES, nil
+	case "VOID":
+		return VOID, nil
 	}
 	return "", fmt.Errorf("unknown JobCd: %s", jobCd)
 }

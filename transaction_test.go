@@ -23,7 +23,6 @@ func TestCreateTransaction(t *testing.T) {
 		ctx,
 		member.Id,
 		card.Seq,
-		// fmt.Sprintf("order-%s", cuid.New()),
 		cuid.New(),
 		transaction.AUTH,
 		1000,
@@ -57,7 +56,6 @@ func TestFindTransaction(t *testing.T) {
 		ctx,
 		member.Id,
 		card.Seq,
-		// fmt.Sprintf("order-%s", cuid.New()),
 		cuid.New(),
 		transaction.AUTH,
 		1000,
@@ -75,5 +73,35 @@ func TestFindTransaction(t *testing.T) {
 	}
 	if t2.Tax != 100 {
 		t.Errorf("got %d, wanted %d", t2.Tax, 100)
+	}
+}
+
+func TestCancel(t *testing.T) {
+	ctx := context.Background()
+	member := &Member{Id: cuid.New(), Name: fmt.Sprintf("Test-%s", cuid.New())}
+	if err := member.Create(ctx); err != nil {
+		t.Fatalf("Save returns error, %v", err)
+	}
+	card, err := CreateCard(ctx, member.Id, member.Name, "4111111111111111", "2212", "1234")
+	if err != nil {
+		t.Errorf("CreateCard returns error: %v", err)
+	}
+	t1, err := CreateTransaction(
+		ctx,
+		member.Id,
+		card.Seq,
+		cuid.New(),
+		transaction.AUTH,
+		1000,
+		100,
+	)
+	if err != nil {
+		t.Errorf("CreateTransaction returns error: %v", err)
+	}
+	if err := t1.Cancel(ctx); err != nil {
+		t.Errorf("Cancel returns error: %v", err)
+	}
+	if t1.JobCd != transaction.VOID {
+		t.Errorf("got %v, wanted %v", t1.JobCd, transaction.VOID)
 	}
 }

@@ -14,6 +14,8 @@ type Transaction struct {
 	Status      string
 	ProcessDate time.Time
 	JobCd       transaction.Job
+	AccessID    string
+	AccessPass  string
 	ItemCode    string
 	Amount      int
 	Tax         int
@@ -25,6 +27,14 @@ type Transaction struct {
 	Forward     string
 	TranId      string
 	Approve     string
+}
+
+func FindTransaction(ctx context.Context, id string) (*Transaction, error) {
+	t := &Transaction{OrderId: id}
+	if err := t.load(ctx); err != nil {
+		return nil, err
+	}
+	return t, nil
 }
 
 func CreateTransaction(ctx context.Context, memberId string, cardSeq int, orderId string, job transaction.Job, amount int, tax int) (*Transaction, error) {
@@ -50,6 +60,21 @@ func CreateTransaction(ctx context.Context, memberId string, cardSeq int, orderI
 	return FindTransaction(ctx, *result2[0]["OrderID"])
 }
 
+func (t *Transaction) Cancel(ctx context.Context) error {
+	values := url.Values{
+		"AccessID":   {t.AccessID},
+		"AccessPass": {t.AccessPass},
+		"JobCd":      {string(transaction.CANCEL)},
+	}
+	if _, err := api.AlterTran.Call(&values); err != nil {
+		return err
+	}
+	if err := t.load(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 func beginTransaction(ctx context.Context, orderId string, job transaction.Job, amount int, tax int) (map[string]*string, error) {
 	if len(orderId) == 0 {
 		orderId = transaction.GenerateOrderId()
@@ -67,6 +92,16 @@ func beginTransaction(ctx context.Context, orderId string, job transaction.Job, 
 	return result[0], nil
 }
 
+func (t *Transaction) load(ctx context.Context) error {
+	values := url.Values{"OrderID": {t.OrderId}}
+	result, err := api.SearchTrade.Call(&values)
+	if err != nil {
+		return err
+	}
+	t.parse(result[0])
+	return nil
+}
+
 func (t *Transaction) parse(result map[string]*string) error {
 	var err error
 	t.OrderId = *result["OrderID"]
@@ -77,6 +112,8 @@ func (t *Transaction) parse(result map[string]*string) error {
 	if t.JobCd, err = transaction.ConvertToJob(*result["JobCd"]); err != nil {
 		return err
 	}
+	t.AccessID = *result["AccessID"]
+	t.AccessPass = *result["AccessPass"]
 	t.ItemCode = *result["ItemCode"]
 	if t.Amount, err = strconv.Atoi(*result["Amount"]); err != nil {
 		return err
@@ -97,15 +134,4 @@ func (t *Transaction) parse(result map[string]*string) error {
 	t.TranId = *result["TranID"]
 	t.Approve = *result["Approve"]
 	return nil
-}
-
-func FindTransaction(ctx context.Context, id string) (*Transaction, error) {
-	values := url.Values{"OrderID": {id}}
-	result, err := api.SearchTrade.Call(&values)
-	if err != nil {
-		return nil, err
-	}
-	t := &Transaction{}
-	t.parse(result[0])
-	return t, nil
 }
