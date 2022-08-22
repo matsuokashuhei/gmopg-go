@@ -7,8 +7,6 @@ import (
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/lucsky/cuid"
 )
 
 type Transaction struct {
@@ -54,7 +52,7 @@ func CreateTransaction(ctx context.Context, memberId string, cardSeq int, orderI
 
 func beginTransaction(ctx context.Context, orderId string, job transaction.Job, amount int, tax int) (map[string]*string, error) {
 	if len(orderId) == 0 {
-		orderId = generateOrderId()
+		orderId = transaction.GenerateOrderId()
 	}
 	values := url.Values{
 		"OrderID": {orderId},
@@ -67,13 +65,6 @@ func beginTransaction(ctx context.Context, orderId string, job transaction.Job, 
 		return nil, err
 	}
 	return result[0], nil
-}
-
-// func createTransaction(ctx context.Context, memberId string, cardSeq int, orderId string, job Job, amount int, tax int) (map[string]*string, error) {
-// }
-
-func generateOrderId() string {
-	return cuid.New()
 }
 
 func (t *Transaction) parse(result map[string]*string) error {

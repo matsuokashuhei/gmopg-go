@@ -1,6 +1,10 @@
 package transaction
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/lucsky/cuid"
+)
 
 type Job string
 
@@ -29,4 +33,8 @@ func ConvertToJob(jobCd string) (Job, error) {
 		return SALES, nil
 	}
 	return "", fmt.Errorf("unknown JobCd: %s", jobCd)
+}
+
+func GenerateOrderId() string {
+	return cuid.New()
 }
