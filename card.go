@@ -42,7 +42,7 @@ func CreateCard(ctx context.Context, memberId string, holderName string, number 
 	}
 	values := url.Values{
 		"MemberID": {memberId},
-		"Token":    {*token},
+		"Token":    {token},
 	}
 	result, err := api.SaveCard.Call(&values)
 	if err != nil {
@@ -105,14 +105,14 @@ func DeleteCard(ctx context.Context, memberId string, seq int) error {
 	return nil
 }
 
-func generateToken(holderName *string, number *string, expiryDate *string, securityCode *string) (*string, error) {
+func generateToken(holderName *string, number *string, expiryDate *string, securityCode *string) (string, error) {
 	encrypted, err := encrypt(holderName, number, expiryDate, securityCode)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	token, err := getToken(encrypted)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	return token, nil
 }
@@ -186,7 +186,7 @@ func encrypt(holder *string, number *string, expiryDate *string, securityCode *s
 	return &encoded, nil
 }
 
-func getToken(encrypted *string) (*string, error) {
+func getToken(encrypted *string) (string, error) {
 	endpoint := fmt.Sprintf("https://%s/ext/api/credit/getToken", os.Getenv("SITE_DOMAIN"))
 	log.Printf("endpoint: %s", endpoint)
 	values := url.Values{
@@ -196,19 +196,19 @@ func getToken(encrypted *string) (*string, error) {
 	}
 	resp, err := http.PostForm(endpoint, values)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	var result map[string]interface{}
 	json.Unmarshal([]byte(body), &result)
 	resultCode := result["resultCode"].([]interface{})[0].(string)
 	if resultCode != "000" {
-		return nil, errors.New(resultCode)
+		return "", errors.New(resultCode)
 	}
 	token := result["tokenObject"].(map[string]interface{})["token"].([]interface{})[0].(string)
-	return &token, nil
+	return token, nil
 }
