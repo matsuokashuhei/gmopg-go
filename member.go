@@ -16,25 +16,25 @@ type Member struct {
 	DeleteFlag int
 }
 
-func FindMember(ctx context.Context, id string) (*Member, error) {
+func (m *Member) SetId(id string) *Member {
+	m.Id = id
+	return m
+}
+
+func (m *Member) SetName(name string) *Member {
+	m.Name = name
+	return m
+}
+
+func (m *Member) Find(ctx context.Context, id string) error {
 	values := url.Values{}
 	values.Set("MemberID", id)
 	result, err := api.SearchMember.Call(&values)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	m := &Member{}
 	m.parse(result[0])
-	return m, nil
-}
-
-func CreateMember(ctx context.Context, id string, name string) (*Member, error) {
-	member := &Member{Id: id, Name: name}
-	err := member.Create(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return member, nil
+	return nil
 }
 
 func (m *Member) Create(ctx context.Context) error {

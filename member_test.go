@@ -12,45 +12,40 @@ import (
 func TestCreate1(t *testing.T) {
 	id := cuid.New()
 	name := fmt.Sprintf("Test %s", id)
-	member := &Member{Id: id, Name: name}
-	ctx := context.Background()
-	if err := member.Create(ctx); err != nil {
-		t.Errorf("Save returns error, %v", err)
+	m := &Member{}
+	if err := m.SetId(id).SetName(name).Create(context.Background()); err != nil {
+		t.Errorf("Create returns error, %v", err)
 	}
-	if member.Id != id {
-		t.Errorf("got %s, wanted %s", member.Id, id)
+	if m.Id != id {
+		t.Errorf("got %s, wanted %s", m.Id, id)
 	}
-	if member.Name != name {
-		t.Errorf("got %s, wanted %s", member.Name, name)
+	if m.Name != name {
+		t.Errorf("got %s, wanted %s", m.Name, name)
 	}
 }
 
 func TestCreate2(t *testing.T) {
-	member := &Member{}
-	ctx := context.Background()
-	if err := member.Create(ctx); err != nil {
+	m := &Member{}
+	if err := m.Create(context.Background()); err != nil {
 		t.Errorf("Save returns error, %v", err)
 	}
-	if member.Id == "" {
-		t.Errorf("member.Id is empty, %v", member.Id)
+	if m.Id == "" {
+		t.Errorf("member.Id is empty, %v", m.Id)
 	}
-	if member.Name != "" {
-		t.Errorf("member.Name is not empty, %v", member.Name)
+	if m.Name != "" {
+		t.Errorf("member.Name is not empty, %v", m.Name)
 	}
 }
 
 func TestFind(t *testing.T) {
 	ctx := context.Background()
-	m1 := &Member{Id: cuid.New(), Name: fmt.Sprintf("Test-%s", cuid.New())}
-	if err := m1.Create(ctx); err != nil {
-		t.Fatalf("Save returns error, %v", err)
+	m1 := &Member{}
+	if err := m1.SetId(cuid.New()).SetName(fmt.Sprintf("Test-%s", cuid.New())).Create(ctx); err != nil {
+		t.Fatalf("Create returns error, %v", err)
 	}
-	m2, err := FindMember(ctx, m1.Id)
-	if err != nil {
+	m2 := &Member{}
+	if err := m2.Find(ctx, m1.Id); err != nil {
 		t.Errorf("Find returns error, %v", err)
-	}
-	if m2 == nil {
-		t.Errorf("Find returns nil")
 	}
 	if m2.Id != m1.Id {
 		t.Errorf("got %s, wanted %s", m2.Id, m1.Id)
@@ -65,9 +60,9 @@ func TestFind(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	ctx := context.Background()
-	m1 := &Member{Id: cuid.New(), Name: fmt.Sprintf("Test-%s", cuid.New())}
-	if err := m1.Create(ctx); err != nil {
-		t.Fatalf("Save returns error, %v", err)
+	m1 := &Member{}
+	if err := m1.SetId(cuid.New()).SetName(fmt.Sprintf("Test-%s", cuid.New())).Create(ctx); err != nil {
+		t.Fatalf("Create returns error, %v", err)
 	}
 	newName := "New name"
 	m1.Name = newName
@@ -81,14 +76,14 @@ func TestUpdate(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	ctx := context.Background()
-	m1 := &Member{Id: cuid.New(), Name: fmt.Sprintf("Test-%s", cuid.New())}
-	if err := m1.Create(ctx); err != nil {
-		t.Fatalf("Save returns error, %v", err)
+	m1 := &Member{}
+	if err := m1.SetId(cuid.New()).SetName(fmt.Sprintf("Test-%s", cuid.New())).Create(ctx); err != nil {
+		t.Fatalf("Create returns error, %v", err)
 	}
 	if err := m1.Delete(ctx); err != nil {
 		t.Errorf("Delete returns error, %v", err)
 	}
-	_, err := FindMember(ctx, m1.Id)
+	err := m1.Find(ctx, m1.Id)
 	if err == nil {
 		t.Errorf("Find does not return error")
 	}
